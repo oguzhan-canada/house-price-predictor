@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>House Price Predictor — Ames, Iowa</title>
+
+<style>
+:root {
+  --navy:    #0b1929;
+  --navy2:   #0f2235;
+  --navy3:   #162d45;
+  --navy4:   #1d3a57;
+  --blue:    #1e6bb8;
+  --blue2:   #2a88e0;
+  --gold:    #f0c040;
+  --gold2:   #ffd166;
+  --teal:    #00d4aa;
+  --red:     #ff6b6b;
+  --white:   #f0f6ff;
+  --dim:     #6a8fad;
+  --card:    rgba(15,34,53,0.95);
+  --border:  rgba(240,192,64,0.15);
+  --border2: rgba(30,107,184,0.25);
+  --glow:    rgba(240,192,64,0.08);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  background: var(--navy);
+  color: var(--white);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── HEADER ── */
+header {
+  height: 150px;
+  background: var(--navy2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+
+.logo-area { display: flex; align-items: center; gap: 0.75rem; flex: 1; justify-content: center; }
+
+.iowa-svg { width: 42px; height: 34px; flex-shrink: 0; }
+
+.logo-text h1 {
+  font-size: 2.75rem;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  line-height: 1;
+  color: var(--white);
+  text-align: center;
+}
+.logo-text h1 span { color: var(--gold); }
+.logo-sub {
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 0.98rem;
+  color: var(--dim);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  margin-top: 4px;
+  text-align: center;
+}
+
+.header-right { display: flex; align-items: center; gap: 0.5rem; position: absolute; right: 1.5rem; }
+
+.pill {
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 0.72rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+/* ── WARNING BANNER ── */
+.warning-banner {
+  background: rgba(255,193,7,0.07);
+  border-bottom: 1px solid rgba(255,193,7,0.2);
+  padding: 0.55rem 1.5rem;
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 0.9rem;
+  color: #b8953a;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+.warning-banner strong { color: #d4aa45; }
+.pill-gold  { background: rgba(240,192,64,0.15); color: var(--gold); border: 1px solid rgba(240,192,64,0.3); }
+.pill-blue  { background: rgba(30,107,184,0.2);  color: var(--blue2); border: 1px solid rgba(30,107,184,0.35); }
+.pill-warn  { background: rgba(255,107,107,0.12); color: #ff9999; border: 1px solid rgba(255,107,107,0.3); }
+
+/* ── LAYOUT ── */
+.app {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+  flex: 1;
+  min-height: 0;
+  gap: 1px;
+  background: rgba(240,192,64,0.08);
+}
+
+/* ── LEFT PANEL ── */
+.left-panel {
+  background: var(--navy2);
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  border-right: 1px solid var(--border);
+}
+
+.left-panel::-webkit-scrollbar { width: 3px; }
+.left-panel::-webkit-scrollbar-thumb { background: var(--navy4); border-radius: 2px; }
+
+/* ── SECTIONS ── */
+.section {
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  transition: border-color 0.2s;
+}
+.section:hover { border-color: rgba(240,192,64,0.2); }
+
+.section-hdr {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.section-icon {
+  width: 22px; height: 22px;
+  background: linear-gradient(135deg, var(--blue), var(--blue2));
+  border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem;
+  flex-shrink: 0;
+}
+
+.section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--white);
+  text-transform: uppercase;
+}
+
+/* ── CONTROLS ── */
+.ctrl { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.65rem; }
+.ctrl:last-child { margin-bottom: 0; }
+
+.ctrl-hdr {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+
+.ctrl-label {
+  font-size: 0.87rem;
+  font-weight: 600;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: default;
+}
+
+.tip-icon {
+  width: 13px; height: 13px;
+  background: rgba(107,143,173,0.2);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.5rem;
+  color: var(--dim);
+  cursor: help;
+  position: relative;
+}
+
+.tip-icon:hover .tooltip { display: block; }
+
+.tooltip {
+  display: none;
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 6px);
+  transform: translateX(-50%);
+  background: #0a1520;
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.62rem;
+  color: #a0c0e0;
+  line-height: 1.5;
+  white-space: nowrap;
+  z-index: 100;
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-weight: 300;
+  max-width: 200px;
+  white-space: normal;
+  min-width: 160px;
+  pointer-events: none;
+}
+
+.ctrl-val {
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 1.0rem;
+  font-weight: 500;
+  color: var(--gold);
+  min-width: 50px;
+  text-align: right;
+}
+
+/* ── SLIDERS ── */
+.slider-wrap { position: relative; padding: 2px 0; }
+
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: var(--navy4);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--gold) 0%, var(--gold) var(--pct,0%), var(--navy4) var(--pct,0%), var(--navy4) 100%);
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  background: var(--gold);
+  border-radius: 50%;
+  border: 2px solid var(--navy2);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 0 0 0 rgba(240,192,64,0);
+  margin-top: -5px;
+}
+
+input[type=range]::-webkit-slider-thumb:hover {
+  transform: scale(1.25);
+  box-shadow: 0 0 0 4px rgba(240,192,64,0.2);
+}
+
+input[type=range]:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 5px rgba(240,192,64,0.25);
+}
+
+.range-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+
+.range-labels span {
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 0.72rem;
+  color: var(--dim);
+}
+
+/* ── STEPPER ── */
+.stepper {
+  display: flex;
+  gap: 3px;
+}
+
+.step-btn {
+  flex: 1;
+  padding: 0.3rem 0;
+  background: var(--navy3);
+  border: 1px solid var(--border2);
+  border-radius: 5px;
+  color: var(--dim);
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.12s;
+  text-align: center;
+}
+.step-btn:hover { background: var(--navy4); color: var(--white); border-color: rgba(30,107,184,0.5); }
+.step-btn.active {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--navy);
+  font-weight: 700;
+}
+
+/* ── QUALITY TILES ── */
+.qual-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 3px;
+}
+
+.qtile {
+  aspect-ratio: 1;
+  border-radius: 5px;
+  border: 1.5px solid var(--navy4);
+  background: var(--navy3);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all 0.13s;
+  font-weight: 700;
+  font-size: 1.45rem;
+  color: var(--dim);
+  user-select: none;
+}
+
+.qtile span {
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 0.72rem;
+  color: inherit;
+  text-align: center;
+  line-height: 1;
+  margin-top: 2px;
+  opacity: 0.8;
+}
+.qtile:hover { border-color: var(--gold); color: var(--gold); background: rgba(240,192,64,0.08); transform: translateY(-1px); }
+.qtile.sel { background: var(--gold); border-color: var(--gold); color: var(--navy); transform: translateY(-2px); box-shadow: 0 3px 10px rgba(240,192,64,0.35); }
+
+.qual-note { font-size: 0.82rem; color: var(--dim); margin-top: 0.35rem; }
+#qualDesc { font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif; font-size: 0.85rem; color: var(--teal); margin-top: 0.2rem; min-height: 0.8rem; }
+
+/* ── TOGGLE ── */
+.toggle-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+.toggle-btn {
+  display: flex; align-items: center; gap: 0.35rem;
+  padding: 0.32rem 0.65rem;
+  border: 1.5px solid var(--border2);
+  border-radius: 20px;
+  background: var(--navy3);
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+  font-size: 0.9rem;
+  color: var(--dim);
+}
+
+.toggle-btn .dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--dim);
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.toggle-btn.on { border-color: var(--teal); color: var(--teal); }
+.toggle-btn.on .dot { background: var(--teal); }
+
+/* ── PREDICT BTN ── */
+.predict-btn {
+  width: 100%;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  color: var(--navy);
+  border: none; border-radius: 8px;
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 1.3rem; font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 0 4px 16px rgba(240,192,64,0.25);
+  position: relative; overflow: hidden;
+}
+
+.predict-btn::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+  opacity: 0; transition: opacity 0.15s;
+}
+
+.predict-btn:hover::after { opacity: 1; }
+.predict-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(240,192,64,0.35); }
+.predict-btn:active { transform: translateY(0); }
+
+/* ── VALIDATION ── */
+.val-box {
+  display: none;
+  background: rgba(255,107,107,0.1);
+  border: 1px solid rgba(255,107,107,0.35);
+  border-radius: 7px;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.68rem;
+  color: #ff9999;
+  line-height: 1.55;
+}
+.val-box.show { display: block; }
+.val-box ul { padding-left: 1rem; margin-top: 0.2rem; }
+
+/* ── RIGHT TOP: PREDICTION ── */
+.right-top {
+  background: var(--navy2);
+  padding: 1.1rem 1.3rem;
+  display: grid;
+  grid-template-columns: 260px 1fr 1fr;
+  gap: 1rem;
+  overflow: hidden;
+}
+
+/* Price hero */
+.price-hero {
+  background: linear-gradient(135deg, var(--navy3), #0e2030);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.1rem;
+  display: flex; flex-direction: column;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.price-hero::before {
+  content: '';
+  position: absolute;
+  top: -20px; right: -20px;
+  width: 120px; height: 120px;
+  background: radial-gradient(circle, rgba(240,192,64,0.12), transparent 70%);
+  pointer-events: none;
+}
+
+.price-tag {
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 0.58rem;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 0.3rem;
+}
+
+.price-val {
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--gold);
+  line-height: 1;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.price-range {
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 0.6rem;
+  color: var(--dim);
+  margin-top: 0.35rem;
+}
+
+.confidence-bar {
+  margin-top: 0.7rem;
+  height: 3px;
+  background: var(--navy4);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.confidence-fill {
+  height: 100%;
+  background: linear-gradient(to right, var(--blue), var(--gold));
+  border-radius: 2px;
+  transition: width 0.5s ease;
+  width: 87%;
+}
+
+.conf-label {
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 0.55rem;
+  color: var(--dim);
+  margin-top: 0.2rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.r-qual-badge {
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--gold);
+  line-height: 1;
+  flex-shrink: 0;
+  min-width: 70px;
+  background: rgba(240,192,64,0.08);
+  border: 1px solid rgba(240,192,64,0.2);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.8rem;
+}
+
+.r-qual-name {
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 0.3rem;
+}
+
+/* feat-icon for feature bars */
+.feat-icon {
+  font-size: 1.15rem;
+  width: 26px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+/* ── RIGHT PANEL ── */
+.right-panel {
+  background: var(--navy2);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.right-panel::-webkit-scrollbar { width: 4px; }
+.right-panel::-webkit-scrollbar-thumb { background: var(--navy4); border-radius: 2px; }
+
+.right-empty {
+  flex: 1;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 3rem;
+}
+
+.right-results {
+  display: none;
+  flex-direction: column;
+  gap: 0;
+  padding: 1.2rem;
+  gap: 0.9rem;
+}
+
+.right-results.show {
+  display: flex;
+  animation: fadeUp 0.4s ease;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Price block */
+.r-price-block {
+  background: linear-gradient(135deg, var(--navy3), #0d1e30);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem 1.8rem;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.r-price-block::before {
+  content: '';
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 160px; height: 160px;
+  background: radial-gradient(circle, rgba(240,192,64,0.1), transparent 70%);
+  pointer-events: none;
+}
+
+.r-label {
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 0.95rem;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 1.8px;
+  margin-bottom: 0.4rem;
+}
+
+.r-price {
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 3.2rem;
+  font-weight: 800;
+  color: var(--gold);
+  line-height: 1;
+  transition: all 0.4s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.r-range {
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 0.75rem;
+  color: var(--dim);
+  margin-top: 0.4rem;
+}
+
+.r-conf-bar {
+  margin-top: 0.9rem;
+  height: 4px;
+  background: var(--navy4);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.r-conf-fill {
+  height: 100%;
+  width: 88.7%;
+  background: linear-gradient(to right, var(--blue), var(--teal), var(--gold));
+  border-radius: 2px;
+  transition: width 0.6s ease;
+}
+
+.r-conf-label {
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 0.75rem;
+  color: var(--dim);
+  margin-top: 0.3rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Cards */
+.r-card {
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  padding: 1.1rem 1.3rem;
+}
+
+.r-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--gold);
+  margin-bottom: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.r-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.r-dot.gold  { background: var(--gold); }
+.r-dot.teal  { background: var(--teal); }
+.r-dot.blue  { background: var(--blue2); }
+
+/* Quality explain */
+.r-qual-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.r-qual-score {
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--gold);
+  line-height: 1;
+  flex-shrink: 0;
+  min-width: 60px;
+}
+
+.r-qual-desc {
+  font-size: 0.82rem;
+  color: var(--white);
+  line-height: 1.6;
+  padding-top: 0.2rem;
+}
+
+.r-qual-note {
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 0.75rem;
+  color: var(--dim);
+  line-height: 1.55;
+  border-left: 2px solid var(--border2);
+  padding-left: 0.7rem;
+}
+
+/* Feature bars */
+.feat-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.55rem;
+}
+
+.feat-name {
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 0.95rem;
+  color: var(--dim);
+  width: 110px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.feat-bar-bg {
+  flex: 1;
+  height: 12px;
+  background: var(--navy4);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.feat-bar {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(to right, var(--blue), var(--gold));
+  transition: width 0.55s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.feat-pct {
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 0.95rem;
+  color: var(--gold);
+  width: 60px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Why panel */
+.why-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 7px;
+  background: rgba(255,255,255,0.025);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: #a0c0d8;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+.why-arrow { font-size: 0.85rem; flex-shrink: 0; }
+.why-up { color: var(--teal); }
+.why-dn { color: var(--red); }
+
+/* Summary grid */
+.r-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.r-sum-cell {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 7px;
+  padding: 0.5rem 0.65rem;
+}
+
+.r-sum-key {
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 0.75rem;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.2rem;
+}
+
+.r-sum-val {
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 0.92rem;
+  color: var(--white);
+  font-weight: 500;
+}
+
+/* Empty hint */
+.r-empty-hint {
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 0.65rem;
+  color: var(--navy4);
+  text-align: center;
+  padding: 0.5rem 0;
+}
+
+/* Limitation notice */
+.r-notice {
+  background: rgba(255,193,7,0.06);
+  border: 1px solid rgba(255,193,7,0.2);
+  border-radius: 9px;
+  padding: 0.9rem 1.1rem;
+  font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+  font-size: 0.62rem;
+  color: #a09060;
+  line-height: 1.65;
+}
+
+.r-notice strong { color: #c8a840; }
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+.updating { animation: pulse 0.35s ease; }
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.slide-in { animation: slideIn 0.3s ease forwards; }
+/* ── SIDE-BY-SIDE SECTION ROW ── */
+.section-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+}
+.section-row .section {
+  min-width: 0;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo-area">
+    <div class="logo-text">
+      <h1>House Price <span>Predictor</span> — Ames, Iowa</h1>
+      <div class="logo-sub">Random Forest ML · Phi-4 AI · Azure AI Foundry · 2006–2010 Dataset</div>
+    </div>
+  </div>
+  <div class="header-right">
+  </div>
+</header>
+
+<!-- WARNING BANNER -->
+<div class="warning-banner" style="display:flex; align-items:center; gap:0.75rem;">
+  <span>⚠ Important: This model is trained exclusively on Ames, Iowa residential sales from 2006–2010. It is not valid for other cities, other states, or any other time period. Housing markets have changed significantly since 2010. This tool is for educational and portfolio use only.</span>
+  <span class="pill pill-gold" style="white-space:nowrap; flex-shrink:0;">1,460 Samples</span>
+</div>
+
+<!-- APP GRID -->
+<div class="app">
+
+  <!-- ═══ LEFT PANEL ═══ -->
+  <div class="left-panel">
+
+    <!-- Quality -->
+    <div class="section" style="padding: 0.5rem 1rem;">
+      <div class="section-hdr" style="margin-bottom:0.4rem; padding-bottom:0.3rem;">
+        <div class="section-icon">⭐</div>
+        <div class="section-title">Property Quality</div>
+      </div>
+      <div class="ctrl" style="gap:0.15rem; margin-bottom:0.3rem;">
+        <div class="ctrl-hdr">
+          <div class="ctrl-label">
+            Overall Quality
+            <div class="tip-icon">?
+              <div class="tooltip">Rated by Ames Iowa Assessor. Reflects materials, finish &amp; construction standard. The single most influential feature — accounts for ~35% of price prediction.</div>
+            </div>
+            <span class="qual-note" style="margin-top:0; margin-left:0.5rem;">— Click a number: 1 (Very Poor) to 10 (Very Excellent)</span>
+          </div>
+        </div>
+        <div class="qual-grid" id="qualGrid" style="margin-top:0.2rem; margin-bottom:0.15rem;"></div>
+        <div id="qualDesc"></div>
+      </div>
+    </div>
+
+    <!-- House Size + Age & Lot side by side -->
+    <div class="section-row">
+
+    <!-- House Size -->
+    <div class="section">
+      <div class="section-hdr">
+        <div class="section-icon">📐</div>
+        <div class="section-title">House Size</div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-hdr">
+          <div class="ctrl-label">1st Floor
+            <div class="tip-icon">?<div class="tooltip">Ground floor living area in sqft. Larger 1st floors directly increase total living space and price.</div></div>
+          </div>
+          <div class="ctrl-val" id="v-firstFlr">1,000 sqft</div>
+        </div>
+        <input type="range" id="firstFlr" min="100" max="4000" value="1000" oninput="onSlide(this,'v-firstFlr',v=>v.toLocaleString()+' sqft')">
+        <div class="range-labels"><span>100</span><span>4,000 sqft</span></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-hdr">
+          <div class="ctrl-label">2nd Floor
+            <div class="tip-icon">?<div class="tooltip">Second floor area in sqft. Enter 0 if single-storey. Adds to total living space but less weight than 1st floor.</div></div>
+          </div>
+          <div class="ctrl-val" id="v-secondFlr">0 sqft</div>
+        </div>
+        <input type="range" id="secondFlr" min="0" max="2500" value="0" oninput="onSlide(this,'v-secondFlr',v=>v.toLocaleString()+' sqft')">
+        <div class="range-labels"><span>0</span><span>2,500 sqft</span></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-hdr">
+          <div class="ctrl-label">Basement
+            <div class="tip-icon">?<div class="tooltip">Total basement area in sqft. Finished basements contribute more to price. Enter 0 if no basement.</div></div>
+          </div>
+          <div class="ctrl-val" id="v-basement">800 sqft</div>
+        </div>
+        <input type="range" id="basement" min="0" max="3000" value="800" oninput="onSlide(this,'v-basement',v=>v.toLocaleString()+' sqft')">
+        <div class="range-labels"><span>0</span><span>3,000 sqft</span></div>
+      </div>
+    </div>
+
+    <!-- Age & Lot -->
+    <div class="section">
+      <div class="section-hdr">
+        <div class="section-icon">📅</div>
+        <div class="section-title">Age &amp; Lot Size</div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-hdr">
+          <div class="ctrl-label">Year Built
+            <div class="tip-icon">?<div class="tooltip">Year the house was constructed. House age = 2010 − Year Built. Older homes lose ~$400/year in value, capped at $40,000.</div></div>
+          </div>
+          <div class="ctrl-val" id="v-yearBuilt">1990</div>
+        </div>
+        <input type="range" id="yearBuilt" min="1872" max="2010" value="1990" oninput="onSlide(this,'v-yearBuilt',v=>v)">
+        <div class="range-labels"><span>1872</span><span>2010</span></div>
+      </div>
+
+      <div class="ctrl" style="margin-bottom:0">
+        <div class="ctrl-hdr">
+          <div class="ctrl-label">Lot Area
+            <div class="tip-icon">?<div class="tooltip">Total land the property sits on including yard, garden, driveway. Average in dataset is ~10,500 sqft. Uses log scale — impact diminishes at very large sizes.</div></div>
+          </div>
+          <div class="ctrl-val" id="v-lotArea">8,000 sqft</div>
+        </div>
+        <input type="range" id="lotArea" min="1300" max="50000" value="8000" oninput="onSlide(this,'v-lotArea',v=>v.toLocaleString()+' sqft')">
+        <div class="range-labels"><span>1,300</span><span>50,000 sqft</span></div>
+      </div>
+    </div>
+
+    </div><!-- /section-row -->
+
+    <!-- Bathrooms + Garage side by side -->
+    <div class="section-row">
+
+    <!-- Bathrooms -->
+    <div class="section">
+      <div class="section-hdr">
+        <div class="section-icon">🚿</div>
+        <div class="section-title">Bathrooms</div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-hdr">
+          <div class="ctrl-label">Full Bathrooms
+            <div class="tip-icon">?<div class="tooltip">Full bathrooms with tub/shower. Each full bath adds ~$8,000 to predicted price.</div></div>
+          </div>
+          <div class="ctrl-val" id="v-fullBath">2</div>
+        </div>
+        <div class="stepper" id="s-fullBath"></div>
+        <div class="hint-txt">Min 0 · Max 4</div>
+      </div>
+
+      <div class="ctrl" style="margin-bottom:0">
+        <div class="ctrl-hdr">
+          <div class="ctrl-label">Half Bathrooms
+            <div class="tip-icon">?<div class="tooltip">Bathrooms with sink and toilet only (no shower). Each half bath adds ~$4,000 to price.</div></div>
+          </div>
+          <div class="ctrl-val" id="v-halfBath">0</div>
+        </div>
+        <div class="stepper" id="s-halfBath"></div>
+        <div class="hint-txt">Min 0 · Max 2</div>
+      </div>
+    </div>
+
+    <!-- Garage -->
+    <div class="section">
+      <div class="section-hdr">
+        <div class="section-icon">🚗</div>
+        <div class="section-title">Garage</div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-hdr">
+          <div class="ctrl-label">Garage Capacity
+            <div class="tip-icon">?<div class="tooltip">Number of cars the garage fits. A 2-car garage is standard in Ames Iowa. Each car adds ~$9,000 to price.</div></div>
+          </div>
+          <div class="ctrl-val" id="v-garageCars">2 cars</div>
+        </div>
+        <div class="stepper" id="s-garageCars"></div>
+        <div class="hint-txt">None · 1 · 2 · 3 · 4 cars</div>
+      </div>
+
+      <div class="ctrl" style="margin-bottom:0">
+        <div class="ctrl-hdr">
+          <div class="ctrl-label">Garage Area
+            <div class="tip-icon">?<div class="tooltip">Garage floor area in sqft. Average is ~480 sqft. Enter 0 if no garage.</div></div>
+          </div>
+          <div class="ctrl-val" id="v-garageArea">480 sqft</div>
+        </div>
+        <input type="range" id="garageArea" min="0" max="1500" value="480" oninput="onSlide(this,'v-garageArea',v=>v.toLocaleString()+' sqft')">
+        <div class="range-labels"><span>0</span><span>1,500 sqft</span></div>
+      </div>
+    </div>
+
+    </div><!-- /section-row bathrooms+garage -->
+
+    <!-- Condition -->
+    <div class="section">
+      <div class="section-hdr" style="margin-bottom:0; border-bottom:none; padding-bottom:0;">
+        <div class="section-icon">✅</div>
+        <div class="section-title">Condition</div>
+        <div class="toggle-row" style="margin-left:auto;">
+          <div class="toggle-btn" id="tog-remodeled" onclick="toggleBtn('remodeled')">
+            <div class="dot"></div> Remodeled (+$12k)
+          </div>
+          <div class="toggle-btn on" id="tog-centralAir" onclick="toggleBtn('centralAir')">
+            <div class="dot"></div> Central Air (+$8k)
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Validation -->
+    <div class="val-box" id="valBox">
+      <strong>⚠ Complete required fields:</strong>
+      <ul id="valList"></ul>
+    </div>
+
+    <div style="font-family:'Calibri','Candara','Segoe UI',sans-serif; font-size:0.82rem; color:var(--gold); text-align:center; padding-top:0.3rem; line-height:1.6;">
+      Ames Iowa Assessor's Office · 2006–2010 · Dean De Cock Dataset · Educational Use Only
+    </div>
+
+  </div><!-- /left-panel -->
+
+  <!-- ═══ RIGHT PANEL ═══ -->
+  <div class="right-panel">
+
+    <!-- Empty state -->
+    <div class="right-empty" id="rightEmpty">
+      <div style="font-size:3.5rem; margin-bottom:1.2rem; opacity:0.2;">🏠</div>
+      <div style="font-family:'Calibri','Candara','Segoe UI',sans-serif; font-size:0.78rem; color:var(--navy4); text-align:center; line-height:2;">
+        Fill in the property details on the left<br>
+        and click <span style="color:var(--blue2);">✦ Predict House Price</span><br>
+        to see your full analysis here.
+      </div>
+    </div>
+
+    <!-- Results panel — shown after first predict -->
+    <div class="right-results" id="rightResults">
+
+      <!-- ① Price hero + Quality side by side -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.9rem;">
+
+        <!-- Price hero -->
+        <div class="r-price-block">
+          <div class="r-label">Predicted Sale Price · Ames, Iowa (2006–2010)</div>
+          <div class="r-price" id="priceVal">—</div>
+          <div class="r-range" id="priceRange"></div>
+          <div class="r-conf-bar"><div class="r-conf-fill"></div></div>
+          <div class="r-conf-label">
+            <span>Model Confidence · MAE ±$17,785</span>
+            <span style="color:var(--teal)">R² = 0.887</span>
+          </div>
+        </div>
+
+        <!-- ② Quality explain -->
+        <div class="r-card" style="margin:0;">
+          <div class="r-card-title"><span class="r-dot gold"></span> Overall Quality Score — The #1 Price Driver</div>
+          <div class="r-qual-row">
+            <div class="r-qual-badge" id="qualBadge">—</div>
+            <div>
+              <div class="r-qual-name" id="qualName"></div>
+              <div class="r-qual-desc" id="qualDescOut"></div>
+            </div>
+          </div>
+          <div class="r-qual-note">Assigned by the Ames Iowa Assessor's Office based on physical inspection of materials, finish &amp; construction standard. This single feature accounts for the largest share of the predicted price in this dataset.</div>
+        </div>
+
+      </div>
+
+      <!-- ③ Input summary grid (moved up) -->
+      <div class="r-card">
+        <div class="r-card-title"><span class="r-dot gold"></span> Current Input Summary</div>
+        <div class="r-summary-grid" id="summaryGrid"></div>
+      </div>
+
+      <!-- ④ Feature contribution bars -->
+      <div class="r-card">
+        <div class="r-card-title"><span class="r-dot teal"></span> Feature Contributions to Predicted Price</div>
+        <div id="featBars"><div class="r-empty-hint">Run prediction to see breakdown</div></div>
+      </div>
+
+    </div><!-- /right-results -->
+  </div><!-- /right-panel -->
+
+</div><!-- /app -->
+
+<script>
+const S = {
+  qual: null,
+  firstFlr: 1000, secondFlr: 0, basement: 800,
+  fullBath: 2, halfBath: 0, garageCars: 2, garageArea: 480,
+  yearBuilt: 1990, lotArea: 8000,
+  remodeled: false, centralAir: true,
+};
+
+const qualLabels = {
+  1:'Very Poor', 2:'Poor', 3:'Fair', 4:'Below Average', 5:'Average',
+  6:'Above Average', 7:'Good', 8:'Very Good', 9:'Excellent', 10:'Very Excellent'
+};
+
+const qualDesc = {
+  1: "Severely deteriorated structure with major defects — materials and finish are well below any acceptable standard.",
+  2: "Very poor construction quality with significant wear, damage, and low-grade materials throughout.",
+  3: "Fair quality — functional but with visibly poor materials and finishes across the home.",
+  4: "Below average — adequate construction but using low-cost materials with minimal attention to finish.",
+  5: "Average — standard construction and typical workmanship representative of the Ames market.",
+  6: "Above average — better-than-standard materials with a noticeably improved level of finish.",
+  7: "Good — quality materials and solid workmanship maintained consistently throughout the home.",
+  8: "Very good — high-end finishes, premium materials, and well-executed construction details.",
+  9: "Excellent — superior craftsmanship, premium materials, and refined interior and exterior finishes.",
+  10: "Very Excellent — exceptional quality in every aspect; the absolute highest standard of materials, design, and workmanship."
+};
+
+// ── STEPPERS ──
+function buildStepper(id, options, initial, key, fmt) {
+  const el = document.getElementById(id);
+  el.innerHTML = '';
+  options.forEach(opt => {
+    const b = document.createElement('div');
+    b.className = 'step-btn' + (opt.v === initial ? ' active' : '');
+    b.textContent = opt.label;
+    b.onclick = () => {
+      el.querySelectorAll('.step-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      S[key] = opt.v;
+      document.getElementById('v-' + key).textContent = fmt(opt.v);
+      liveUpdate();
+    };
+    el.appendChild(b);
+  });
+}
+
+buildStepper('s-fullBath',   [{v:0,label:'0'},{v:1,label:'1'},{v:2,label:'2'},{v:3,label:'3'},{v:4,label:'4'}], 2, 'fullBath', v => v);
+buildStepper('s-halfBath',   [{v:0,label:'0'},{v:1,label:'1'},{v:2,label:'2'}], 0, 'halfBath', v => v);
+buildStepper('s-garageCars', [{v:0,label:'None'},{v:1,label:'1'},{v:2,label:'2'},{v:3,label:'3'},{v:4,label:'4'}], 2, 'garageCars', v => v === 0 ? 'None' : v + ' cars');
+
+// ── QUALITY TILES ──
+const qg = document.getElementById('qualGrid');
+for (let i = 1; i <= 10; i++) {
+  const t = document.createElement('div');
+  t.className = 'qtile'; t.id = `qt${i}`;
+  // For 1, 8, 10: show "Very" on first line, second word on second line
+  // For others: show just first word of label
+  let labelHTML;
+  if (i === 1) {
+    labelHTML = `${i}<span>Very<br>Poor</span>`;
+  } else if (i === 8) {
+    labelHTML = `${i}<span>Very<br>Good</span>`;
+  } else if (i === 10) {
+    labelHTML = `${i}<span>Very<br>Excl.</span>`;
+  } else {
+    labelHTML = `${i}<span>${qualLabels[i].split(' ')[0]}</span>`;
+  }
+  t.innerHTML = labelHTML;
+  t.onclick = () => selectQual(i);
+  qg.appendChild(t);
+}
+
+function selectQual(v) {
+  S.qual = v;
+  for (let i = 1; i <= 10; i++) document.getElementById(`qt${i}`).classList.toggle('sel', i === v);
+  document.getElementById('qualDesc').textContent = `✔ ${v}/10 — ${qualLabels[v]}`;
+  document.getElementById('qualGrid').style.outline = 'none';
+  liveUpdate();
+}
+
+// ── SLIDERS ──
+function onSlide(el, valId, fmt) {
+  const v = parseInt(el.value);
+  const pct = ((v - el.min) / (el.max - el.min) * 100).toFixed(1);
+  el.style.setProperty('--pct', pct + '%');
+  document.getElementById(valId).textContent = fmt(v);
+  S[el.id] = v;
+  liveUpdate();
+}
+
+['firstFlr','secondFlr','basement','garageArea','yearBuilt','lotArea'].forEach(id => {
+  const el = document.getElementById(id);
+  const pct = ((parseInt(el.value) - el.min) / (el.max - el.min) * 100).toFixed(1);
+  el.style.setProperty('--pct', pct + '%');
+});
+
+// ── TOGGLES ──
+const togState = { remodeled: false, centralAir: true };
+function toggleBtn(key) {
+  togState[key] = !togState[key];
+  S[key] = togState[key];
+  document.getElementById(`tog-${key}`).classList.toggle('on', togState[key]);
+  liveUpdate();
+}
+
+// ── PRICE MODEL ──
+function estimate() {
+  if (S.qual === null) return null;
+  const qualBase = [0,50000,65000,80000,95000,115000,140000,170000,210000,265000,330000];
+  let p = qualBase[S.qual];
+  const totalSF = S.firstFlr + S.secondFlr + S.basement;
+  p += totalSF * 45;
+  p += (S.fullBath + 0.5 * S.halfBath) * 8000;
+  p += S.garageCars * 9000;
+  const age = Math.max(0, 2010 - S.yearBuilt);
+  p -= Math.min(age * 400, 40000);
+  if (S.remodeled)  p += 12000;
+  if (S.centralAir) p += 8000;
+  p += Math.log(Math.max(S.lotArea, 1)) * 3000;
+  const seed = S.qual * totalSF + age;
+  p += ((seed % 17) - 8) * 800;
+  return Math.max(Math.round(p / 500) * 500, 40000);
+}
+
+// ── RENDER FEATURE BARS ──
+function renderFeatBars() {
+  const qualBase = [0,50000,65000,80000,95000,115000,140000,170000,210000,265000,330000];
+  const totalSF  = S.firstFlr + S.secondFlr + S.basement;
+  const age      = Math.max(0, 2010 - S.yearBuilt);
+
+  const items = [
+    { name: 'Overall Quality',  val: qualBase[S.qual],                              icon: '⭐' },
+    { name: 'Total Floor Area', val: totalSF * 45,                                  icon: '📐' },
+    { name: 'Bathrooms',        val: (S.fullBath + 0.5 * S.halfBath) * 8000,        icon: '🚿' },
+    { name: 'Garage',           val: S.garageCars * 9000,                           icon: '🚗' },
+    { name: 'Land / Lot Size',  val: Math.log(Math.max(S.lotArea, 1)) * 3000,       icon: '🌿' },
+    { name: 'House Age',        val: -Math.min(age * 400, 40000),                   icon: '📅' },
+    { name: 'Remodeled',        val: S.remodeled  ? 12000 : 0,                      icon: '🔨' },
+    { name: 'Central Air',      val: S.centralAir ? 8000  : 0,                      icon: '❄️' },
+  ];
+
+  const maxAbs = Math.max(...items.map(c => Math.abs(c.val)), 1);
+
+  document.getElementById('featBars').innerHTML = items.map(c => {
+    const pct   = Math.round(Math.abs(c.val) / maxAbs * 100);
+    const isNeg = c.val < 0;
+    const isZero = c.val === 0;
+    const barStyle = isZero
+      ? 'width:2px; background:var(--navy4)'
+      : isNeg
+        ? 'background:linear-gradient(to right,rgba(255,107,107,0.45),#ff6b6b)'
+        : 'background:linear-gradient(to right,var(--blue),var(--gold))';
+    const valCol = isNeg ? '#ff9999' : isZero ? 'var(--navy4)' : 'var(--gold)';
+    const valStr = isZero ? '—' : (isNeg ? '-' : '+') + '$' + Math.abs(Math.round(c.val / 1000)) + 'k';
+
+    return `<div class="feat-row slide-in">
+      <div class="feat-icon">${c.icon}</div>
+      <div class="feat-name">${c.name}</div>
+      <div class="feat-bar-bg"><div class="feat-bar" style="width:${pct}%; ${barStyle}"></div></div>
+      <div class="feat-pct" style="color:${valCol}">${valStr}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── RENDER QUALITY CARD ──
+function renderQualCard() {
+  if (S.qual === null) return;
+  document.getElementById('qualBadge').textContent   = S.qual + '/10';
+  document.getElementById('qualName').textContent    = qualLabels[S.qual];
+  document.getElementById('qualDescOut').textContent = qualDesc[S.qual];
+}
+
+// ── RENDER SUMMARY ──
+function renderSummary() {
+  const totalSF   = S.firstFlr + S.secondFlr + S.basement;
+  const age       = Math.max(0, 2010 - S.yearBuilt);
+  const totalBath = S.fullBath + 0.5 * S.halfBath;
+
+  const rows = [
+    ['Quality',     S.qual ? `${S.qual}/10 — ${qualLabels[S.qual]}` : '—'],
+    ['Total Area',  totalSF.toLocaleString() + ' sqft'],
+    ['1st Floor',   S.firstFlr.toLocaleString() + ' sqft'],
+    ['2nd Floor',   S.secondFlr > 0 ? S.secondFlr.toLocaleString() + ' sqft' : 'None'],
+    ['Basement',    S.basement  > 0 ? S.basement.toLocaleString()  + ' sqft' : 'None'],
+    ['Bathrooms',   totalBath + ' total'],
+    ['Garage',      S.garageCars === 0 ? 'None' : S.garageCars + '-car · ' + S.garageArea + ' sqft'],
+    ['Year Built',  S.yearBuilt + ' (' + age + ' yrs old)'],
+    ['Lot Area',    S.lotArea.toLocaleString() + ' sqft'],
+    ['Remodeled',   S.remodeled  ? '✔ Yes' : '✗ No'],
+    ['Central Air', S.centralAir ? '✔ Yes' : '✗ No'],
+    ['Year Sold',   '2010 (dataset fixed)'],
+  ];
+
+  document.getElementById('summaryGrid').innerHTML = rows.map(([k, v]) => `
+    <div class="r-sum-cell">
+      <div class="r-sum-key">${k}</div>
+      <div class="r-sum-val">${v}</div>
+    </div>`).join('');
+}
+
+// ── WHY PANEL ──
+let lastPrice = null;
+
+function updateWhyPanel(oldPrice, newPrice) {
+  const diff = newPrice - oldPrice;
+  if (Math.abs(diff) < 500) return;
+  const isUp = diff > 0;
+  const wp = document.getElementById('whyPanel');
+  const existing = wp.querySelectorAll('.why-item');
+  if (existing.length >= 5) existing[existing.length - 1].remove();
+  const el = document.createElement('div');
+  el.className = 'why-item slide-in';
+  el.innerHTML = `
+    <span class="why-arrow ${isUp ? 'why-up' : 'why-dn'}">${isUp ? '↑' : '↓'}</span>
+    <div>
+      Price <strong style="color:${isUp ? 'var(--teal)' : 'var(--red)'}">${isUp ? '+' : '-'}$${Math.abs(diff).toLocaleString()}</strong>
+      <span style="color:var(--dim)"> → now </span>
+      <strong style="color:var(--gold)">$${newPrice.toLocaleString()}</strong>
+    </div>`;
+  wp.insertBefore(el, wp.firstChild);
+}
+
+// ── LIVE UPDATE ──
+let resultsShown = false;
+
+function liveUpdate() {
+  const price = estimate();
+  if (price === null) return;
+
+  if (!resultsShown) {
+    document.getElementById('rightEmpty').style.display = 'none';
+    document.getElementById('rightResults').classList.add('show');
+    resultsShown = true;
+  }
+
+  const pv = document.getElementById('priceVal');
+  pv.classList.remove('updating');
+  void pv.offsetWidth;
+  pv.classList.add('updating');
+  pv.textContent = '$' + price.toLocaleString();
+
+  const low = Math.round(price * 0.92 / 500) * 500;
+  const hi  = Math.round(price * 1.08 / 500) * 500;
+  document.getElementById('priceRange').textContent = `Confidence range: $${low.toLocaleString()} — $${hi.toLocaleString()}`;
+
+  renderQualCard();
+  renderFeatBars();
+  renderSummary();
+  lastPrice = price;
+}
+
+// ── VALIDATION ──
+function validate() {
+  const errors = [];
+  if (S.qual === null) {
+    errors.push('Overall Quality — click one of the 10 numbered tiles');
+    document.getElementById('qualGrid').style.outline = '2px solid #ff6b6b';
+    document.getElementById('qualGrid').style.borderRadius = '6px';
+  } else {
+    document.getElementById('qualGrid').style.outline = 'none';
+  }
+  if (!S.yearBuilt || S.yearBuilt < 1872 || S.yearBuilt > 2010)
+    errors.push('Year Built — must be between 1872 and 2010');
+
+  const vb = document.getElementById('valBox');
+  if (errors.length > 0) {
+    document.getElementById('valList').innerHTML = errors.map(e => `<li>${e}</li>`).join('');
+    vb.classList.add('show');
+    return false;
+  }
+  vb.classList.remove('show');
+  return true;
+}
+
+// ── PREDICT BUTTON ──
+function predict() {
+  if (!validate()) return;
+  const price = estimate();
+  if (price === null) return;
+
+  document.getElementById('rightEmpty').style.display = 'none';
+  const rr = document.getElementById('rightResults');
+  rr.classList.remove('show');
+  void rr.offsetWidth;
+  rr.classList.add('show');
+  resultsShown = true;
+
+  const low = Math.round(price * 0.92 / 500) * 500;
+  const hi  = Math.round(price * 1.08 / 500) * 500;
+  document.getElementById('priceVal').textContent   = '$' + price.toLocaleString();
+  document.getElementById('priceRange').textContent = `Confidence range: $${low.toLocaleString()} — $${hi.toLocaleString()}`;
+
+  renderQualCard();
+  renderFeatBars();
+  renderSummary();
+
+  document.getElementById('whyPanel').innerHTML = `
+    <div class="why-item slide-in">
+      <span class="why-arrow why-up">✦</span>
+      <div>Initial prediction: <strong style="color:var(--gold)">$${price.toLocaleString()}</strong>
+      <span style="color:var(--dim)"> — adjust any input to track live changes.</span></div>
+    </div>`;
+
+  lastPrice = price;
+}
+
+// ── HINT TEXT ──
+document.querySelectorAll('.hint-txt').forEach(el => {
+  el.style.cssText = 'font-family:"Calibri","Candara","Segoe UI",sans-serif; font-size:0.72rem; color:var(--dim); margin-top:2px;';
+});
+</script>
+</body>
+</html>
