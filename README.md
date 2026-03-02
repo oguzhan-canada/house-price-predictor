@@ -3,7 +3,7 @@
 An end-to-end ML project that predicts house sale prices using a Random Forest model, with AI-powered interpretation via Microsoft Phi-4 deployed on Azure AI Foundry.
 
 ## 🔗 Live Demo
-[👉 Try the Interactive App Here](https://oguzhantekin.github.io/house-price-predictor)
+[👉 Try the Interactive App Here](https://oguzhan-canada.github.io/house-price-predictor)
 
 ---
 
